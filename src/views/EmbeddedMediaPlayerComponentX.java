@@ -112,7 +112,7 @@ public class EmbeddedMediaPlayerComponentX extends Panel implements MediaPlayerE
         "--video-title=vlcj video output",
         "--no-plugins-cache",
         "--no-video-title-show",
-        //"--no-sub-autodetect-file",
+        "--no-subsdec-autodetect-utf8",
         "--subsdec-encoding=GB18030",
         "--no-snapshot-preview",
         "--quiet",

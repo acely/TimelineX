@@ -22,11 +22,13 @@ public class Timeline {
 	public int track_max = 5;//最大轨道数
 	public int track_hight = 25;//轨道高度
 	public int time_unit = 100;//每个时间单位的长度（毫秒）
-	private int time_unit_width = 7;//每个时间单位在标尺上显示的宽度（像素）
+	private int time_unit_width = 3;//每个时间单位在标尺上显示的宽度（像素）
 	public int time_total = 12;//时间轴总长度（秒）
 	public int default_width = 2000;//块默认长度 ms
 	public int ruler_hight = 25;//标尺高度
 	private long curr_time = 0;
+	public long repeat_start = -1;//循环播放的起始时间
+	public long repeat_end = -1;//循环播放的结束时间
 	//------------------
 	private boolean playing = false;
 	//------------------
@@ -43,10 +45,32 @@ public class Timeline {
 	public void add_block(HRPane newblock,int layer,boolean visiable) {
 		newblock.layer = layer;
 		blocks.add(newblock);
+		//System.out.println("added:"+newblock.getName());
 		if (visiable) {
 			TimelinePane.getTLPane().add_block_by_user(newblock);
 		}else {
 			TimelinePane.getTLPane().add_block(newblock);
+		}
+	}
+	
+	public void add_block_below(String name) {
+		for (int i = 0; i < blocks.size(); i++) {
+			if (blocks.get(i).getName().equals(name)) {
+				HRPane ori = blocks.get(i);
+				if (ori.layer < track_max) {
+					HRPane newHrPane = new HRPane("->");
+					newHrPane.time_start = ori.time_start;
+					newHrPane.time_end = ori.time_end;
+					newHrPane.setLocation(ori.getX(),1+ruler_hight+ori.layer*track_hight);
+					newHrPane.setSize(ori.getSize());
+					newHrPane.layer = ori.layer+1;
+					blocks.add(newHrPane);
+					TimelinePane.getTLPane().add_block(newHrPane);
+					TimelinePane.getTLPane().repaint();
+					newHrPane.requestFocusInWindow();
+				}
+				break;
+			}
 		}
 	}
 	
@@ -59,6 +83,11 @@ public class Timeline {
 				break;
 			}
 		}
+		//删除后也刷新文件
+		Timeline.getTimeline().EncodeSrt();
+		TimelineX.getTimelineX().saveSrtFile();
+		TimelineX.tlx.getPlayPane().getMediaPlayer().setSubTitleFile(
+		TimelineX.getTimelineX().videofile.substring(0,TimelineX.getTimelineX().videofile.lastIndexOf("."))+".srt");
 	}
 	
 	public void clearAll() {

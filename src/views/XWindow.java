@@ -1,16 +1,24 @@
 package views;
 
 import java.awt.BorderLayout;
-import java.awt.LayoutManager;
-import java.awt.Polygon;
+import java.awt.Cursor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+//import java.awt.Polygon;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
-import com.sun.awt.AWTUtilities;
+//import com.sun.awt.AWTUtilities;
+
+
+
 
 import modles.Timeline;
-
 import controls.DispTime;
 import controls.TimelineX;
 
@@ -18,7 +26,7 @@ import controls.TimelineX;
  *
  * @author  __USER__
  */
-public class XWindow extends javax.swing.JFrame {
+public class XWindow extends javax.swing.JFrame implements DropTargetListener{
 
 	/**
 	 * 
@@ -33,14 +41,12 @@ public class XWindow extends javax.swing.JFrame {
 		initComponents();
 		playpancontainer.setLayout(new BorderLayout());
 		playpancontainer.add(playpane, BorderLayout.CENTER);
-		//int[] pxs = { 2, 703, 703, 920, 920, 2 };
-		//int[] pys = { 30, 30, 0, 0, 607, 607 };
-		//int[] pxs = { 2, 703, 703, 920, 920, 2 };
-		//int[] pys = { 30, 30, 0, 0, 607, 607 };
-		//Polygon shape = new Polygon(pxs, pys, 6);
-		//AWTUtilities.setWindowShape(this, shape);
+		/*int[] pxs = { 2, 703, 703, 920, 920, 2 };
+		int[] pys = { 30, 30, 0, 0, 607, 607 };
+		Polygon shape = new Polygon(pxs, pys, 6);
+		AWTUtilities.setWindowShape(this, shape);*/
 		new DispTime(showtime).start();
-		System.out.println(getWidth() + "-" + getHeight());
+		new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 	}
 
 	//GEN-BEGIN:initComponents
@@ -154,6 +160,7 @@ public class XWindow extends javax.swing.JFrame {
 		});
 
 		jButton2.setText("CLEAR");
+		jButton2.setFocusable(false);
 		jButton2.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jButton2ActionPerformed(evt);
@@ -420,5 +427,33 @@ public class XWindow extends javax.swing.JFrame {
 	private javax.swing.JPanel toppane;
 	private javax.swing.JSlider volume;
 	// End of variables declaration//GEN-END:variables
+
+	@Override
+	public void dragEnter(DropTargetDragEvent arg0) {
+		setCursor(new Cursor(Cursor.MOVE_CURSOR));
+	}
+
+	@Override
+	public void dragExit(DropTargetEvent arg0) {
+		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+	}
+
+	@Override
+	public void dragOver(DropTargetDragEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void drop(DropTargetDropEvent arg0) {
+		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		TimelineX.getTimelineX().readDroppedFile(arg0);
+	}
+
+	@Override
+	public void dropActionChanged(DropTargetDragEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

@@ -34,6 +34,14 @@ public class Play extends Timer {
 			Timeline.getTimeline().setCurrTime(Timeline.getTimeline().getCurrTime() + 50);
 			TimelinePane.getTLPane().setPlayhead((int)((Timeline.getTimeline().getCurrTime())*(float)Timeline.getTimeline().getTimeUnitWidth()/Timeline.getTimeline().time_unit)+1);
 			TimelinePane.getTLPane().repaint();
+			//如果选择了块，则循环播放对应时间段
+			if (Timeline.getTimeline().repeat_end != -1) {
+				if (Timeline.getTimeline().getCurrTime() >= Timeline.getTimeline().repeat_end) {
+					Timeline.getTimeline().setCurrTime(Timeline.getTimeline().repeat_start);
+					TimelinePane.getTLPane().setPlayhead((int)((Timeline.getTimeline().repeat_start)*(float)Timeline.getTimeline().getTimeUnitWidth()/Timeline.getTimeline().time_unit)+1);
+					TimelineX.tlx.getPlayPane().getMediaPlayer().setTime(Timeline.getTimeline().repeat_start);
+				}
+			}
 			//如果播放头到达时间轴末尾，则停止播放，将播放头返回到头部
 			if(TimelinePane.getTLPane().getPlayhead() >= TimelinePane.getTLPane().getWidth()) {
 				Timeline.getTimeline().setPlaying(false);

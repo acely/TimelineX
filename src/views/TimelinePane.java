@@ -34,6 +34,7 @@ public class TimelinePane extends JPanel {
 	private static TimelinePane tlPane = new TimelinePane();
 	private TimelinePane(){
 		setLayout(null);
+		setDoubleBuffered(true);
 		init();
 	}
 	public static TimelinePane getTLPane() {
@@ -98,6 +99,7 @@ public class TimelinePane extends JPanel {
 	
 	public void remove_block(HRPane bye) {
 		remove(bye);
+		requestFocusInWindow();
 		repaint();
 	}
 	
@@ -112,6 +114,7 @@ public class TimelinePane extends JPanel {
 	
 	@Override
 	protected void paintComponent(Graphics g) {
+		System.out.println("paint timeline");
 		g.setColor(new Color(30,30,30));
 		g.fillRect(0, 0, getWidth(), Timeline.getTimeline().ruler_hight);
 		g.setColor(new Color(40,40,40));
@@ -120,11 +123,8 @@ public class TimelinePane extends JPanel {
 		g.setColor(Color.WHITE);
 		for (int i = 0; i <= (Timeline.getTimeline().time_total*1000)/Timeline.getTimeline().time_unit; i++) {
 			if (i%(1000/Timeline.getTimeline().time_unit) == 0) {
-				g.drawLine(i*Timeline.getTimeline().getTimeUnitWidth()+1, 1, i*Timeline.getTimeline().getTimeUnitWidth()+1, 10);
-				g.drawString((i/(1000/Timeline.getTimeline().time_unit))+"s", i*Timeline.getTimeline().getTimeUnitWidth()-5, Timeline.getTimeline().ruler_hight-2);
-				
-			}else {
-				g.drawLine(i*Timeline.getTimeline().getTimeUnitWidth()+1, 1, i*Timeline.getTimeline().getTimeUnitWidth()+1, 3);
+				g.drawLine(i*Timeline.getTimeline().getTimeUnitWidth()+1, 1, i*Timeline.getTimeline().getTimeUnitWidth()+1, 5);
+				//g.drawString((i/(1000/Timeline.getTimeline().time_unit))+"s", i*Timeline.getTimeline().getTimeUnitWidth()-5, Timeline.getTimeline().ruler_hight-2);
 			}
 			
 		}
@@ -146,6 +146,7 @@ public class TimelinePane extends JPanel {
 		g.drawLine(playhead-2, 1, playhead+2, 1);
 		g.drawLine(playhead-1, 2, playhead+1, 2);
 	}
+	
 	
 	private void init() {
 		this.addMouseListener(new MouseListener() {
@@ -177,6 +178,7 @@ public class TimelinePane extends JPanel {
 
 			@Override
 			public void mousePressed(MouseEvent e) {
+				System.out.println("--------------------");
 				Timeline.getTimeline().setPlaying(false);
 				playhead = e.getX();
 				repaint();

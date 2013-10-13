@@ -35,6 +35,7 @@ public class HRPane extends JPanel{
 	boolean draging = false;
 	boolean chosen = false;//has focus
 	boolean usesnapvalue = false;//吸附后，从吸附点获取时间值，不使用坐标来计算时间
+	boolean editing = false;//为true时不响应鼠标操作
 	int drag_type = 0;//在拖拽时是移动还是缩放，1-左侧缩放  2-右侧缩放 3-移动
 	int sx = 0;//鼠标按下时的x坐标
 	int sy = 0;//鼠标按下时的y坐标
@@ -53,6 +54,7 @@ public class HRPane extends JPanel{
 	//运单号200000540865
 	public HRPane(String t) {
 		setFocusable(true);
+		setDoubleBuffered(true);
 		setName(hashCode()+"");
 		init();
 		text.setForeground(new Color(80,240,240));
@@ -81,6 +83,7 @@ public class HRPane extends JPanel{
 	
 	@Override
 	protected void paintComponent(Graphics g) {
+		//System.out.println("paint block");
 		text.setLocation(resize_anchor+5, getHeight()/2-8);
 		text.setSize(getWidth()-2*resize_anchor-10,text.getHeight());
 		edittext.setLocation(resize_anchor+1,2);
@@ -108,14 +111,14 @@ public class HRPane extends JPanel{
 			g.fillRect(resize_anchor+2, getHeight()-3, getWidth()-2*resize_anchor-4, 2);
 		}
 		//左侧的调整块
-		if (onleft) {
+		if (onleft && !editing) {
 			g.setColor(Color.RED);
 		}else {
 			g.setColor(getColor(group));
 		}
 		g.fillRect(1, 1, resize_anchor, getHeight()-2);
 		//右侧的调整块
-		if (onright) {
+		if (onright && !editing) {
 			g.setColor(Color.RED);
 		}else {
 			g.setColor(getColor(group));
@@ -146,32 +149,46 @@ public class HRPane extends JPanel{
 			
 			@Override
 			public void mouseMoved(MouseEvent e) {
+				if (editing) {
+					return;
+				}
 				int x = e.getX();
 				int y = e.getY();
 				//左侧的调整块感应
 				if (x >= 1 && x <= resize_anchor+1 && y >= 1 && y<= getHeight()-2) {
-					setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
+					boolean onleft_ori = onleft;
 					onleft = true;
-					repaint();
+					if (onleft_ori != onleft) {//大大减少了repaint()的调用次数
+						setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
+						repaint();
+					}
 				}else {
 					//右侧的调整块感应
 					if (x >= getWidth()-(resize_anchor+1) && x <= getWidth()-2 && y >= 1 && y<= getHeight()-2) {
-						setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
+						boolean onright_ori = onright;
 						onright = true;
-						repaint();
-						return;
+						if (onright_ori != onright) {//大大减少了repaint()的调用次数
+							setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
+							repaint();
+						}
 					}else {
-						
+						boolean onleft_ori = onleft;
+						boolean onright_ori = onright;
 						onright = false;
+						onleft = false;
+						if (onleft_ori != onleft || onright_ori != onright) {//大大减少了repaint()的调用次数
+							setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+							repaint();
+						}
 					}
-					setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-					onleft = false;
-					repaint();
 				}
 			}
 			
 			@Override
 			public void mouseDragged(MouseEvent e) {
+				if (editing) {
+					return;
+				}
 				draging = true;
 				if (onright) {//----------------------------RIGHT RESIZE-----------------------------
 					if (temp_width+(e.getX()-sx) < 2*resize_anchor+3) {
@@ -339,10 +356,14 @@ public class HRPane extends JPanel{
 				on = false;
 				onleft = false;
 				onright = false;
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				repaint();
 			}
 			@Override
 			public void mousePressed(MouseEvent e){
+				if (editing) {
+					return;
+				}
 				pressed = true;
 				sx = e.getX();temp_x = getX();temp_width = getWidth();
 				sy = e.getY();temp_y = getY();
@@ -351,6 +372,9 @@ public class HRPane extends JPanel{
 			}
 			@Override
 			public void mouseReleased(MouseEvent e){
+				if (editing) {
+					return;
+				}
 				//更新边界时间信息
 				switch (drag_type) {//1-左侧缩放  2-右侧缩放 3-移动
 				case 1://
@@ -378,7 +402,11 @@ public class HRPane extends JPanel{
 					break;
 				default:break;
 				}	
-				text.setText(time_start+":"+time_end+"@Layer"+layer);
+				//如果选中的话，调整完长度，还要更新重复播放的区间
+				if (chosen) {
+					Timeline.getTimeline().repeat_start = time_start;
+					Timeline.getTimeline().repeat_end = time_end;
+				}
 				//退出拖拽状态
 				pressed = false;
 				draging = false;
@@ -389,7 +417,14 @@ public class HRPane extends JPanel{
 				if (!(e.getX() >= 0 && e.getX()<= getWidth() && e.getY() >= 0 && e.getY() <= getHeight())) {
 					on = false;
 				}
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				repaint();
+				if (Timeline.getTimeline().getBlocks().size() != 0) {//如果界面上没有东西，则不生成文件
+					Timeline.getTimeline().EncodeSrt();
+					TimelineX.getTimelineX().saveSrtFile();
+					TimelineX.tlx.getPlayPane().getMediaPlayer().setSubTitleFile(
+							TimelineX.getTimelineX().videofile.substring(0,TimelineX.getTimelineX().videofile.lastIndexOf("."))+".srt");
+				}
 			}
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -400,6 +435,9 @@ public class HRPane extends JPanel{
 					edittext.setVisible(true);
 					text.setVisible(false);
 					edittext.requestFocusInWindow();
+					temp_width = getWidth();
+					setSize(600, getHeight());
+					editing = true;
 					repaint();
 				}
 			}
@@ -409,11 +447,15 @@ public class HRPane extends JPanel{
 			@Override
 			public void focusLost(FocusEvent e) {
 				chosen = false;
+				Timeline.getTimeline().repeat_start = -1;
+				Timeline.getTimeline().repeat_end = -1;
 				repaint();
 			}
 			@Override
 			public void focusGained(FocusEvent e) {
 				chosen = true;
+				Timeline.getTimeline().repeat_start = time_start;
+				Timeline.getTimeline().repeat_end = time_end;
 				repaint();
 			}
 		});
@@ -441,7 +483,12 @@ public class HRPane extends JPanel{
 					edittext.setVisible(true);
 					text.setVisible(false);
 					edittext.requestFocusInWindow();
+					temp_width = getWidth();
+					setSize(600, getHeight());
+					editing = true;
 					repaint();
+				}else if (k == 27) {//ESC键，丢弃焦点，将焦点转移到时间轴
+					TimelinePane.getTLPane().requestFocusInWindow();
 				}else if (k == 32) {//SPACE
 					TimelineX.getTimelineX().play();
 				}else if (k == 49 && e.isAltDown()) {//分配到第1组（数字1键）
@@ -476,7 +523,21 @@ public class HRPane extends JPanel{
 					setToolTipText(edittext.getText());
 					edittext.setVisible(false);
 					text.setVisible(true);
+					setSize(temp_width, getHeight());
+					editing = false;
+					if (e.isControlDown()) {//按下Ctl的话按回车在下面产生新的块
+						System.out.println("duplicate:"+getName());
+						Timeline.getTimeline().add_block_below(getName());
+					}else {
+						requestFocusInWindow();
+					}
 					repaint();
+					if (Timeline.getTimeline().getBlocks().size() != 0) {//如果界面上没有东西，则不生成文件
+						Timeline.getTimeline().EncodeSrt();
+						TimelineX.getTimelineX().saveSrtFile();
+						TimelineX.tlx.getPlayPane().getMediaPlayer().setSubTitleFile(
+								TimelineX.getTimelineX().videofile.substring(0,TimelineX.getTimelineX().videofile.lastIndexOf("."))+".srt");
+					}
 				}
 			}
 		});
@@ -488,8 +549,10 @@ public class HRPane extends JPanel{
 				setToolTipText(edittext.getText());
 				edittext.setVisible(false);
 				text.setVisible(true);
+				setSize(temp_width, getHeight());
+				editing = false;
 				repaint();
-				requestFocusInWindow();
+				//requestFocusInWindow();
 			}
 			@Override
 			public void focusGained(FocusEvent arg0) {

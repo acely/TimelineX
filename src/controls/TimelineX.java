@@ -1,11 +1,17 @@
 package controls;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Iterator;
+import java.util.List;
 
 import modles.Timeline;
 import uk.co.caprica.vlcj.binding.LibVlc;
@@ -56,7 +62,7 @@ public class TimelineX {
 			videoJustOpened = true;
 		}
 		readSrtFile();
-		//tlx.getPlayPane().getMediaPlayer().stop();
+		tlx.getPlayPane().getMediaPlayer().setRepeat(true);
 		System.out.println(tlx.getPlayPane().getMediaPlayerFactory().version());
 		//----------------------------------
 		
@@ -80,12 +86,8 @@ public class TimelineX {
 	public void play() {
 		if (Timeline.getTimeline().getPlaying()) {
 			Timeline.getTimeline().setPlaying(false);
-			//TimelineX.tlx.getPlayPane().getMediaPlayer().pause();
-			//System.out.println("Paused");
+			System.out.println(tlx.getPlayPane().getMediaPlayer().getLength());
 		}else {
-			Timeline.getTimeline().EncodeSrt();
-			saveSrtFile();
-			tlx.getPlayPane().getMediaPlayer().setSubTitleFile(videofile.substring(0,videofile.lastIndexOf("."))+".srt");
 			Timeline.getTimeline().setPlaying(true);
 			TimelineX.tlx.getPlayPane().getMediaPlayer().play();
 			System.out.println("Playing");
@@ -105,8 +107,11 @@ public class TimelineX {
 	
 	public void readSrtFile() {
 		try {
-			Timeline.getTimeline().srtin = readFile(new File(videofile.substring(0,videofile.lastIndexOf("."))+".srt")).replace("\r", "");
-			Timeline.getTimeline().DecodeSrt();
+			File in = new File(videofile.substring(0,videofile.lastIndexOf("."))+".srt");
+			if (in.exists()) {
+				Timeline.getTimeline().srtin = readFile(in).replace("\r", "");
+				Timeline.getTimeline().DecodeSrt();
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -131,6 +136,31 @@ public class TimelineX {
 		isr.close();
 		fis.close();
 		return new String(buf);
+	}
+	
+	public void readDroppedFile(DropTargetDropEvent dtde) {
+		try {
+	        if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+	            dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+	            List<?> list = (List<?>) (dtde.getTransferable()
+	                    .getTransferData(DataFlavor.javaFileListFlavor));
+	            Iterator<?> iterator = list.iterator();
+	            while (iterator.hasNext()) {
+	                File f = (File) iterator.next();
+	                tlx.getPlayPane().getMediaPlayer().prepareMedia(f.getAbsolutePath());
+	    			videofile = f.getAbsolutePath();
+	    			videoJustOpened = true;
+	    			readSrtFile();
+	    			tlx.getPlayPane().getMediaPlayer().setRepeat(true);
+	    			TimelinePane.getTLPane().setPlayhead(1);
+	    			Timeline.getTimeline().clearAll();
+	            }
+	            dtde.dropComplete(true);
+	        }else {
+	            dtde.rejectDrop();
+	        }
+	    } catch (IOException ioe) {
+	    } catch (UnsupportedFlavorException e) {}
 	}
 	
 	public void setVolume(int v) {
