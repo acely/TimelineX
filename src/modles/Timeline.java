@@ -1,3 +1,8 @@
+/**
+ * @author acely
+ * 本程序由ACELY创作，开源代码仅供参考交流。不提供任何技术支持和质量保证。
+ * 禁止修改、传播、再次分发以及任何商业用途。不得将部分或全部代码应用于其他任何软件。
+ */
 package modles;
 
 import java.util.Collections;
