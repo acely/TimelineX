@@ -1,10 +1,15 @@
-package views;
+/**
+ * @author acely
+ * 本程序由ACELY创作，开源代码仅供参考交流。不提供任何技术支持和质量保证。
+ * 禁止修改、传播、再次分发以及任何商业用途。不得将部分或全部代码应用于其他任何软件。
+ */
+ package views;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
-//import java.awt.Polygon;
+import java.awt.Polygon;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
@@ -13,7 +18,7 @@ import java.awt.dnd.DropTargetListener;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
-//import com.sun.awt.AWTUtilities;
+import com.sun.awt.AWTUtilities;
 
 
 
